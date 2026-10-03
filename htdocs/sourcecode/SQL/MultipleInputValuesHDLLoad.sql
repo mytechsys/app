@@ -137,3 +137,63 @@ GROUP BY
     m.effective_date;
 
 COMMIT;
+\
+
+
+DECLARE
+    -- Optional: truncate or clean staging table before loading a new batch
+    -- EXECUTE IMMEDIATE 'TRUNCATE TABLE hdl_element_entry_stage';
+BEGIN
+    INSERT INTO hdl_element_entry_stage (
+        entry_id,
+        employee_id,
+        element_id,
+        effective_start_date,
+        costing_segment_1,
+        costing_segment_2,
+        input_value_name_1,
+        screen_entry_value_1,
+        input_value_name_2,
+        screen_entry_value_2,
+        input_value_name_3,
+        screen_entry_value_3
+    )
+    WITH ranked_inputs AS (
+        SELECT 
+            h.entry_id,
+            h.employee_id,
+            h.element_id,
+            h.effective_start_date,
+            h.costing_segment_1,
+            h.costing_segment_2,
+            v.input_name,
+            v.input_value,
+            ROW_NUMBER() OVER (PARTITION BY h.entry_id ORDER BY v.input_name) AS rn
+        FROM element_entry_headers h
+        JOIN element_entry_values v ON h.entry_id = v.entry_id
+    )
+    SELECT 
+        entry_id, 
+        employee_id, 
+        element_id, 
+        effective_start_date, 
+        costing_segment_1, 
+        costing_segment_2,
+        MAX(CASE WHEN rn = 1 THEN input_name END),
+        MAX(CASE WHEN rn = 1 THEN input_value END),
+        MAX(CASE WHEN rn = 2 THEN input_name END),
+        MAX(CASE WHEN rn = 2 THEN input_value END),
+        MAX(CASE WHEN rn = 3 THEN input_name END),
+        MAX(CASE WHEN rn = 3 THEN input_value END)
+    FROM ranked_inputs
+    GROUP BY 
+        entry_id, 
+        employee_id, 
+        element_id, 
+        effective_start_date, 
+        costing_segment_1, 
+        costing_segment_2;
+
+    COMMIT;
+END;
+/
