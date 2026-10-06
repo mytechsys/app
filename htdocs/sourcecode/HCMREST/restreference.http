@@ -1,0 +1,4 @@
+-- lookupCodes
+curl --location 'https://fa-euth-dev20-saasfademo1.ds-fa.oraclepdemos.com/fscmRestApi/resources/11.13.18.05/commonLookups/HRC_SOURCE_SYSTEM_OWNER/child/lookupCodes?q=EnabledFlag%3DY' \
+--header 'Authorization: Basic aGNtX2ltcGwyMDp6OV5uNFkjaw=='
+  
