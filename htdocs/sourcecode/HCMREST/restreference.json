@@ -1,0 +1,286 @@
+# /fscmRestApi/resources/11.13.18.05/commonLookups/HRC_SOURCE_SYSTEM_OWNER/child/lookupCodes
+
+curl --location 'https://fa-euth-dev20-saasfademo1.ds-fa.oraclepdemos.com/fscmRestApi/resources/11.13.18.05/commonLookups/HRC_SOURCE_SYSTEM_OWNER/child/lookupCodes?q=EnabledFlag%3DY' \
+--header 'Authorization: Basic aGNtX2ltcGwyMDp6OV5uNFkjaw=='
+
+{
+    "items": [
+        {
+            "LookupCode": "BBTest_Source",
+            "Meaning": "BB load",
+            "Description": null,
+            "EnabledFlag": "Y",
+            "StartDateActive": "2025-01-01",
+            "EndDateActive": null,
+            "DisplaySequence": 1,
+            "Tag": null,
+            "CreatedBy": "emp1.emp1",
+            "CreationDate": "2026-10-04T06:42:25+00:00",
+            "LastUpdateDate": "2026-10-04T06:44:19.493+00:00",
+            "LastUpdateLogin": "5C1C5708645DAC14E0630C62F00A4EC0",
+            "LastUpdatedBy": "emp1.emp1",
+            "links": [
+                {
+                    "rel": "self",
+                    "href": "https://fa-euth-dev20-saasfademo1.ds-fa.oraclepdemos.com:443/fscmRestApi/resources/11.13.18.05/commonLookups/HRC_SOURCE_SYSTEM_OWNER/child/lookupCodes/BBTest_Source",
+                    "name": "lookupCodes",
+                    "kind": "item"
+                },
+                {
+                    "rel": "canonical",
+                    "href": "https://fa-euth-dev20-saasfademo1.ds-fa.oraclepdemos.com:443/fscmRestApi/resources/11.13.18.05/commonLookups/HRC_SOURCE_SYSTEM_OWNER/child/lookupCodes/BBTest_Source",
+                    "name": "lookupCodes",
+                    "kind": "item"
+                },
+                {
+                    "rel": "parent",
+                    "href": "https://fa-euth-dev20-saasfademo1.ds-fa.oraclepdemos.com:443/fscmRestApi/resources/11.13.18.05/commonLookups/HRC_SOURCE_SYSTEM_OWNER",
+                    "name": "commonLookups",
+                    "kind": "item"
+                },
+                {
+                    "rel": "child",
+                    "href": "https://fa-euth-dev20-saasfademo1.ds-fa.oraclepdemos.com:443/fscmRestApi/resources/11.13.18.05/commonLookups/HRC_SOURCE_SYSTEM_OWNER/child/lookupCodes/BBTest_Source/child/lookupsDFF",
+                    "name": "lookupsDFF",
+                    "kind": "collection"
+                },
+                {
+                    "rel": "child",
+                    "href": "https://fa-euth-dev20-saasfademo1.ds-fa.oraclepdemos.com:443/fscmRestApi/resources/11.13.18.05/commonLookups/HRC_SOURCE_SYSTEM_OWNER/child/lookupCodes/BBTest_Source/child/translations",
+                    "name": "translations",
+                    "kind": "collection"
+                }
+            ]
+        }
+    ],
+    "count": 7,
+    "hasMore": false,
+    "limit": 25,
+    "offset": 0,
+    "links": [
+        {
+            "rel": "self",
+            "href": "https://fa-euth-dev20-saasfademo1.ds-fa.oraclepdemos.com:443/fscmRestApi/resources/11.13.18.05/commonLookups/HRC_SOURCE_SYSTEM_OWNER/child/lookupCodes",
+            "name": "lookupCodes",
+            "kind": "collection"
+        }
+    ]
+}
+
+
+-------------------------------------------------------------------------------------------------------------------------------------
+
+# fscmRestApi/resources/11.13.18.05/commonLookups
+
+curl --location 'https://fa-euth-dev20-saasfademo1.ds-fa.oraclepdemos.com/fscmRestApi/resources/11.13.18.05/commonLookups/?onlyData=true' \
+--header 'Authorization: Basic aGNtX2ltcGwyMDp6OV5uNFkjaw=='
+
+{
+    "items": [
+        {
+            "LookupType": "ABSENCE_CATEGORY",
+            "ModuleId": "61ECAF4AAB28E990E040449821C61C97",
+            "Meaning": "Absence Category",
+            "Description": "Category of absences, such as sick or vacation.",
+            "CustomizationLevel": "E",
+            "RestAccessSecured": "SECURE",
+            "CreatedBy": "SEED_DATA_FROM_APPLICATION",
+            "CreationDate": "2013-08-08T06:35:25+00:00",
+            "LastUpdateDate": "2026-03-14T15:15:56.139+00:00",
+            "LastUpdateLogin": "-1",
+            "LastUpdatedBy": "SEED_DATA_FROM_APPLICATION",
+            "links": [
+                {
+                    "rel": "self",
+                    "href": "https://fa-euth-dev20-saasfademo1.ds-fa.oraclepdemos.com:443/fscmRestApi/resources/11.13.18.05/commonLookups/ABSENCE_CATEGORY",
+                    "name": "commonLookups",
+                    "kind": "item"
+                },
+                {
+                    "rel": "canonical",
+                    "href": "https://fa-euth-dev20-saasfademo1.ds-fa.oraclepdemos.com:443/fscmRestApi/resources/11.13.18.05/commonLookups/ABSENCE_CATEGORY",
+                    "name": "commonLookups",
+                    "kind": "item"
+                },
+                {
+                    "rel": "child",
+                    "href": "https://fa-euth-dev20-saasfademo1.ds-fa.oraclepdemos.com:443/fscmRestApi/resources/11.13.18.05/commonLookups/ABSENCE_CATEGORY/child/lookupCodes",
+                    "name": "lookupCodes",
+                    "kind": "collection"
+                },
+                {
+                    "rel": "child",
+                    "href": "https://fa-euth-dev20-saasfademo1.ds-fa.oraclepdemos.com:443/fscmRestApi/resources/11.13.18.05/commonLookups/ABSENCE_CATEGORY/child/translations",
+                    "name": "translations",
+                    "kind": "collection"
+                }
+            ]
+        },
+        {
+            "LookupType": "ABSENCE_ELEMENTS_UOM",
+            "ModuleId": "61ECAF4AAB28E990E040449821C61C97",
+            "Meaning": "Absence Elements Unit of Measure",
+            "Description": "Absence Elements Unit of Measure, for example days, hours",
+            "CustomizationLevel": "S",
+            "RestAccessSecured": "SECURE",
+            "CreatedBy": "SEED_DATA_FROM_APPLICATION",
+            "CreationDate": "2013-08-08T06:35:25.062+00:00",
+            "LastUpdateDate": "2026-03-14T15:15:56.139+00:00",
+            "LastUpdateLogin": "-1",
+            "LastUpdatedBy": "SEED_DATA_FROM_APPLICATION",
+            "links": [
+                {
+                    "rel": "self",
+                    "href": "https://fa-euth-dev20-saasfademo1.ds-fa.oraclepdemos.com:443/fscmRestApi/resources/11.13.18.05/commonLookups/ABSENCE_ELEMENTS_UOM",
+                    "name": "commonLookups",
+                    "kind": "item"
+                },
+                {
+                    "rel": "canonical",
+                    "href": "https://fa-euth-dev20-saasfademo1.ds-fa.oraclepdemos.com:443/fscmRestApi/resources/11.13.18.05/commonLookups/ABSENCE_ELEMENTS_UOM",
+                    "name": "commonLookups",
+                    "kind": "item"
+                },
+                {
+                    "rel": "child",
+                    "href": "https://fa-euth-dev20-saasfademo1.ds-fa.oraclepdemos.com:443/fscmRestApi/resources/11.13.18.05/commonLookups/ABSENCE_ELEMENTS_UOM/child/lookupCodes",
+                    "name": "lookupCodes",
+                    "kind": "collection"
+                },
+                {
+                    "rel": "child",
+                    "href": "https://fa-euth-dev20-saasfademo1.ds-fa.oraclepdemos.com:443/fscmRestApi/resources/11.13.18.05/commonLookups/ABSENCE_ELEMENTS_UOM/child/translations",
+                    "name": "translations",
+                    "kind": "collection"
+                }
+            ]
+        }
+    ],
+    "count": 25,
+    "hasMore": true,
+    "limit": 25,
+    "offset": 0,
+    "links": [
+        {
+            "rel": "self",
+            "href": "https://fa-euth-dev20-saasfademo1.ds-fa.oraclepdemos.com:443/fscmRestApi/resources/11.13.18.05/commonLookups",
+            "name": "commonLookups",
+            "kind": "collection"
+        }
+    ]
+}
+
+
+----------------------------------------------------------------------------------------------------------------------------------------
+
+# /hcmRestApi/resources/11.13.18.05/payrollInputValuesLOV
+
+curl --location 'https://fa-euth-dev20-saasfademo1.ds-fa.oraclepdemos.com/hcmRestApi/resources/11.13.18.05/payrollInputValuesLOV' \
+--header 'Authorization: Basic aGNtX2ltcGwyMDp6OV5uNFkjaw=='
+
+{
+    "items": [
+        {
+            "InputValueId": 300000051006143,
+            "EffectiveStartDate": "1951-01-01",
+            "EffectiveEndDate": "4712-12-31",
+            "InputValueName": "Amount",
+            "DisplaySequence": 2,
+            "UOM": "M",
+            "ReservedInputValue": "RESERVED_INPUT_VALUE",
+            "ElementName": "ADD Pretax",
+            "ElementTypeId": 300000051006137,
+            "ElementEffectiveStartDate": "1951-01-01",
+            "ElementEffectiveEndDate": "2016-12-31",
+            "LegislativeDataGroupName": "US Legislative Data Group",
+            "LegislationCode": null,
+            "LegislativeDataGroupId": 300000046974970,
+            "links": [
+                {
+                    "rel": "self",
+                    "href": "https://fa-euth-dev20-saasfademo1.ds-fa.oraclepdemos.com:443/hcmRestApi/resources/11.13.18.05/payrollInputValuesLOV/00030000000EACED00057708000110D934790ABF0000004AACED00057372000D6A6176612E73716C2E4461746514FA46683F3566970200007872000E6A6176612E7574696C2E44617465686A81014B59741903000078707708FFFFFF746419F000780000004AACED00057372000D6A6176612E73716C2E4461746514FA46683F3566970200007872000E6A6176612E7574696C2E44617465686A81014B5974190300007870770800004EB9F6DD140078",
+                    "name": "payrollInputValuesLOV",
+                    "kind": "item"
+                },
+                {
+                    "rel": "canonical",
+                    "href": "https://fa-euth-dev20-saasfademo1.ds-fa.oraclepdemos.com:443/hcmRestApi/resources/11.13.18.05/payrollInputValuesLOV/00030000000EACED00057708000110D934790ABF0000004AACED00057372000D6A6176612E73716C2E4461746514FA46683F3566970200007872000E6A6176612E7574696C2E44617465686A81014B59741903000078707708FFFFFF746419F000780000004AACED00057372000D6A6176612E73716C2E4461746514FA46683F3566970200007872000E6A6176612E7574696C2E44617465686A81014B5974190300007870770800004EB9F6DD140078",
+                    "name": "payrollInputValuesLOV",
+                    "kind": "item"
+                }
+            ]
+        },
+        {
+            "InputValueId": 300000128983263,
+            "EffectiveStartDate": "1951-01-01",
+            "EffectiveEndDate": "4712-12-31",
+            "InputValueName": "Amount",
+            "DisplaySequence": 2,
+            "UOM": "M",
+            "ReservedInputValue": "RESERVED_INPUT_VALUE",
+            "ElementName": "ADD Pretax",
+            "ElementTypeId": 300000128983257,
+            "ElementEffectiveStartDate": "1951-01-01",
+            "ElementEffectiveEndDate": "4712-12-31",
+            "LegislativeDataGroupName": "Progress US Legislative Data Group",
+            "LegislationCode": null,
+            "LegislativeDataGroupId": 300000076107547,
+            "links": [
+                {
+                    "rel": "self",
+                    "href": "https://fa-euth-dev20-saasfademo1.ds-fa.oraclepdemos.com:443/hcmRestApi/resources/11.13.18.05/payrollInputValuesLOV/00030000000EACED00057708000110D9391EE0DF0000004AACED00057372000D6A6176612E73716C2E4461746514FA46683F3566970200007872000E6A6176612E7574696C2E44617465686A81014B59741903000078707708FFFFFF746419F000780000004AACED00057372000D6A6176612E73716C2E4461746514FA46683F3566970200007872000E6A6176612E7574696C2E44617465686A81014B5974190300007870770800004EB9F6DD140078",
+                    "name": "payrollInputValuesLOV",
+                    "kind": "item"
+                },
+                {
+                    "rel": "canonical",
+                    "href": "https://fa-euth-dev20-saasfademo1.ds-fa.oraclepdemos.com:443/hcmRestApi/resources/11.13.18.05/payrollInputValuesLOV/00030000000EACED00057708000110D9391EE0DF0000004AACED00057372000D6A6176612E73716C2E4461746514FA46683F3566970200007872000E6A6176612E7574696C2E44617465686A81014B59741903000078707708FFFFFF746419F000780000004AACED00057372000D6A6176612E73716C2E4461746514FA46683F3566970200007872000E6A6176612E7574696C2E44617465686A81014B5974190300007870770800004EB9F6DD140078",
+                    "name": "payrollInputValuesLOV",
+                    "kind": "item"
+                }
+            ]
+        },
+        {
+            "InputValueId": 300000051006143,
+            "EffectiveStartDate": "1951-01-01",
+            "EffectiveEndDate": "4712-12-31",
+            "InputValueName": "Amount",
+            "DisplaySequence": 2,
+            "UOM": "M",
+            "ReservedInputValue": "RESERVED_INPUT_VALUE",
+            "ElementName": "ADD Pretax",
+            "ElementTypeId": 300000051006137,
+            "ElementEffectiveStartDate": "2017-01-01",
+            "ElementEffectiveEndDate": "4712-12-31",
+            "LegislativeDataGroupName": "US Legislative Data Group",
+            "LegislationCode": null,
+            "LegislativeDataGroupId": 300000046974970,
+            "links": [
+                {
+                    "rel": "self",
+                    "href": "https://fa-euth-dev20-saasfademo1.ds-fa.oraclepdemos.com:443/hcmRestApi/resources/11.13.18.05/payrollInputValuesLOV/00030000000EACED00057708000110D934790ABF0000004AACED00057372000D6A6176612E73716C2E4461746514FA46683F3566970200007872000E6A6176612E7574696C2E44617465686A81014B59741903000078707708FFFFFF746419F000780000004AACED00057372000D6A6176612E73716C2E4461746514FA46683F3566970200007872000E6A6176612E7574696C2E44617465686A81014B5974190300007870770800004EB9F6DD140078",
+                    "name": "payrollInputValuesLOV",
+                    "kind": "item"
+                },
+                {
+                    "rel": "canonical",
+                    "href": "https://fa-euth-dev20-saasfademo1.ds-fa.oraclepdemos.com:443/hcmRestApi/resources/11.13.18.05/payrollInputValuesLOV/00030000000EACED00057708000110D934790ABF0000004AACED00057372000D6A6176612E73716C2E4461746514FA46683F3566970200007872000E6A6176612E7574696C2E44617465686A81014B59741903000078707708FFFFFF746419F000780000004AACED00057372000D6A6176612E73716C2E4461746514FA46683F3566970200007872000E6A6176612E7574696C2E44617465686A81014B5974190300007870770800004EB9F6DD140078",
+                    "name": "payrollInputValuesLOV",
+                    "kind": "item"
+                }
+            ]
+        }
+    ],
+    "count": 25,
+    "hasMore": true,
+    "limit": 25,
+    "offset": 0,
+    "links": [
+        {
+            "rel": "self",
+            "href": "https://fa-euth-dev20-saasfademo1.ds-fa.oraclepdemos.com:443/hcmRestApi/resources/11.13.18.05/payrollInputValuesLOV",
+            "name": "payrollInputValuesLOV",
+            "kind": "collection"
+        }
+    ]
+}

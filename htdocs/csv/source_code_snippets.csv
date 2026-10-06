@@ -3,3 +3,4 @@ Title,Description,Category,RawUrl,CodeContent
 "Elements and Input Types List","Elements and Input Types List.","SQL","https://raw.githubusercontent.com/mytechsys/script/refs/heads/main/htdocs/sourcecode/BIP/PayrollElementsInputValues.sql",
 "MultipleInputValuesHDLLoad","Loading Multiple Input Values into Staging Table","SQL","https://raw.githubusercontent.com/mytechsys/ScriptBase/refs/heads/main/htdocs/sourcecode/SQL/MultipleInputValuesHDLLoad.sql",
 "ORDS Array Type Data","ORDS Array Type Data","SQL",https://raw.githubusercontent.com/mytechsys/ScriptBase/refs/heads/main/htdocs/sourcecode/SQL/ORDSArrayTypeData.sql,
+"HCM REST Service","HCM Rest Endpoint References","JSON",https://raw.githubusercontent.com/mytechsys/ScriptBase/refs/heads/main/htdocs/sourcecode/HCMREST/restreference.json,
