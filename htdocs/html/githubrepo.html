@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Repo Explorer & CSV Grid Viewer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Highlight.js Syntax Highlighting Styles -->
+    <link id="highlight-theme-link" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+
+    <style>
+        .custom-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1rem;
+            padding-right: 2.5rem;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        #edge-trigger {
+            position: fixed;
+            left: 0;
+            top: 60px;
+            bottom: 0;
+            width: 12px;
+            z-index: 40;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans h-screen flex flex-col overflow-hidden">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-white border-b border-blue-100 px-6 py-3.5 flex items-center justify-between shadow-sm z-30 flex-shrink-0">
+        <div class="flex items-center space-x-3">
+            <button onclick="toggleSidebar()" id="sidebar-toggle-btn" class="bg-blue-50 hover:bg-blue-100 text-blue-700 p-2 rounded-xl border border-blue-200 transition shadow-sm flex items-center justify-center" title="Toggle Sidebar">
+                <i class="fa-solid fa-bars text-lg" id="sidebar-toggle-icon"></i>
+            </button>
+            <div class="bg-blue-600 text-white p-2 rounded-xl shadow-md flex items-center justify-center">
+                <i class="fa-brands fa-github text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold tracking-tight text-blue-900">GitHub Repo Explorer</h1>
+                <p class="text-xs text-blue-600/70 font-medium">Repository, Branch, File & CSV Grid Inspector</p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-3">
+            <div class="hidden md:flex items-center space-x-1.5 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm">
+                <i class="fa-solid fa-palette text-xs text-slate-500"></i>
+                <select id="code-theme-select" onchange="changeCodeTheme(this.value)" class="custom-select bg-transparent text-xs font-medium text-slate-700 focus:outline-none cursor-pointer">
+                    <option value="github">GitHub Light</option>
+                    <option value="vs">VS Light</option>
+                    <option value="atom-one-light">Atom Light</option>
+                    <option value="stackoverflow-light">StackOverflow Light</option>
+                </select>
+            </div>
+
+            <button onclick="toggleSettingsModal(true)" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-semibold transition shadow-sm flex items-center space-x-2">
+                <i class="fa-solid fa-gear"></i>
+                <span>Load Repositories</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Settings Modal Pop-up -->
+    <div id="settings-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-blue-100 w-full max-w-lg overflow-hidden transform transition-all">
+            <div class="bg-blue-600 px-6 py-4 text-white flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-cloud-arrow-down text-lg"></i>
+                    <h3 class="font-bold text-base">Load Repositories Source</h3>
+                </div>
+                <button onclick="toggleSettingsModal(false)" class="text-blue-100 hover:text-white p-1 rounded-lg transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-6">
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-blue-900">1. Load from Raw CSV URL</label>
+                    <p class="text-xs text-slate-500">Expected format: <code class="bg-slate-100 px-1.5 py-0.5 rounded text-blue-600 font-mono">Repository Name, Repository link</code></p>
+                    <div class="flex space-x-2">
+                        <input type="text" id="csv-url" placeholder="Paste Raw GitHub CSV URL..." 
+                            class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button onclick="loadRepositoriesFromCSV()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-semibold transition shadow-sm flex items-center space-x-1">
+                            <span>Load CSV</span>
+                        </button>
+                    </div>
+                </div>
+
+                <hr class="border-slate-100">
+
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-blue-900">2. Open Direct Repository URL</label>
+                    <p class="text-xs text-slate-500">Paste any public GitHub repository link directly.</p>
+                    <div class="flex space-x-2">
+                        <input type="text" id="direct-repo-url" placeholder="https://github.com/owner/repo" 
+                            class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button onclick="loadDirectRepository()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-semibold transition shadow-sm flex items-center space-x-1">
+                            <span>Open Repo</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-50 px-6 py-3 border-t border-slate-100 flex justify-end">
+                <button onclick="toggleSettingsModal(false)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-xl text-xs font-semibold transition">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edge hover trigger to open sidebar when collapsed -->
+    <div id="edge-trigger" onmouseenter="handleEdgeHover()" title="Hover to open sidebar" style="display: none;"></div>
+
+    <div class="flex flex-1 overflow-hidden relative">
+        
+        <!-- Resizable Sidebar -->
+        <aside id="sidebar" style="width: 280px;" class="bg-white border-r border-blue-100 flex flex-col overflow-hidden shadow-sm z-25 transition-transform duration-300 ease-in-out flex-shrink-0 relative">
+            <div class="p-3.5 border-b border-slate-100 space-y-2.5 bg-blue-50/30 flex-shrink-0">
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-blue-900 mb-1">Select Repository</label>
+                    <select id="repo-select" onchange="onRepoSelected()" class="custom-select w-full bg-white border border-blue-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm cursor-pointer">
+                        <option value="">-- Load repositories --</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-blue-900 mb-1">Select Branch</label>
+                    <select id="branch-select" onchange="onBranchSelected()" disabled class="custom-select w-full bg-white border border-blue-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm opacity-50 cursor-not-allowed">
+                        <option value="">-- Select repository first --</option>
+                    </select>
+                </div>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-search text-xs"></i>
+                    </span>
+                    <input type="text" id="file-search-input" oninput="filterFileTree(this.value)" placeholder="Search file name..." 
+                        class="w-full bg-white border border-blue-200 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm">
+                </div>
+            </div>
+
+            <!-- File Tree View Container -->
+            <div class="flex-1 overflow-y-auto p-3" id="file-tree-container">
+                <div class="text-center text-slate-500 text-xs mt-12 px-2">
+                    <i class="fa-solid fa-folder-open text-3xl mb-2 block text-blue-400"></i>
+                    Select a repository and branch to explore files.
+                </div>
+            </div>
+
+            <!-- Resizer Handle -->
+            <div id="sidebar-resizer" onmousedown="initResize(event)" class="absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-blue-400/50 transition z-30"></div>
+        </aside>
+
+        <!-- Main Viewer Panel -->
+        <main class="flex-1 bg-white flex flex-col overflow-hidden relative min-w-0">
+            <!-- Action Toolbar Header -->
+            <div class="bg-slate-50 border-b border-blue-100 px-6 py-3 flex flex-wrap items-center justify-between gap-3 shadow-sm flex-shrink-0">
+                <!-- File Name & Copy Path Symbol Header -->
+                <div class="flex items-center space-x-2 text-sm text-slate-700 min-w-0">
+                    <i class="fa-solid fa-code text-blue-600 flex-shrink-0"></i>
+                    <div class="flex items-center space-x-2 min-w-0">
+                        <!-- Display ONLY the filename -->
+                        <span id="current-file-name-display" class="font-bold font-mono text-slate-900 text-xs truncate max-w-xs" title="No file selected">No file selected</span>
+                        <!-- Dedicated copy path symbol button -->
+                        <button id="copy-path-btn" onclick="copyFilePath()" disabled class="hidden text-xs bg-white hover:bg-blue-50 text-blue-600 border border-blue-200 p-1.5 rounded-lg transition shadow-sm flex-shrink-0" title="Copy complete file path">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                        <span id="branch-badge" class="hidden text-[10px] text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full font-semibold flex-shrink-0"></span>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-2 flex-wrap gap-y-2 flex-shrink-0">
+                    <!-- CSV View Mode Toggle (Shown only for .csv files) -->
+                    <div id="csv-view-toggle-container" class="hidden items-center space-x-1 bg-blue-100/60 p-1 rounded-xl border border-blue-200">
+                        <button id="btn-view-table" onclick="setCsvViewMode('table')" class="px-3 py-1 rounded-lg text-xs font-bold bg-blue-600 text-white shadow-sm transition">
+                            <i class="fa-solid fa-table mr-1"></i> CSV Grid View
+                        </button>
+                        <button id="btn-view-raw" onclick="setCsvViewMode('raw')" class="px-3 py-1 rounded-lg text-xs font-bold text-blue-900 hover:bg-blue-200/50 transition">
+                            <i class="fa-solid fa-file-lines mr-1"></i> Raw Text
+                        </button>
+                    </div>
+
+                    <button id="copy-btn" onclick="copyFileContent()" disabled class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 opacity-50 cursor-not-allowed px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 shadow-sm">
+                        <i class="fa-regular fa-copy"></i>
+                        <span>Copy Code</span>
+                    </button>
+
+                    <button id="save-folder-btn" onclick="saveToFolder()" disabled class="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 opacity-50 cursor-not-allowed px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 shadow-sm">
+                        <i class="fa-solid fa-folder-plus"></i>
+                        <span>Save to Folder</span>
+                    </button>
+
+                    <button id="download-btn" onclick="downloadCurrentFile()" disabled class="bg-blue-600 hover:bg-blue-700 text-white opacity-50 cursor-not-allowed px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 shadow-sm">
+                        <i class="fa-solid fa-download"></i>
+                        <span>Download</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Code & Data Display Area -->
+            <div class="flex-1 overflow-auto p-6 bg-white relative" id="code-viewer-container">
+                <!-- Unsupported File Banner -->
+                <div id="unsupported-banner" class="hidden absolute inset-0 bg-white/95 backdrop-blur-sm z-20 flex flex-col items-center justify-center text-center p-6">
+                    <div class="bg-amber-50 border border-amber-200 text-amber-800 p-6 rounded-2xl max-w-md shadow-xl">
+                        <i class="fa-solid fa-triangle-exclamation text-3xl mb-2 text-amber-600"></i>
+                        <h3 class="text-base font-bold text-slate-900 mb-1">File Not Supported to Display</h3>
+                        <p class="text-xs text-slate-600 mb-4">This file is binary or contains formatting that cannot be rendered as text in the browser code viewer.</p>
+                        <div class="flex justify-center space-x-3">
+                            <button onclick="downloadCurrentFile()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-semibold transition shadow">
+                                <i class="fa-solid fa-download mr-1"></i> Download File
+                            </button>
+                            <button onclick="saveToFolder()" class="bg-slate-100 hover:bg-slate-200 text-slate-800 px-4 py-2 rounded-xl text-xs font-semibold transition border border-slate-300">
+                                <i class="fa-solid fa-folder-plus mr-1"></i> Save to Folder
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CSV Grid Table View Container -->
+                <div id="csv-table-container" class="hidden w-full h-full overflow-auto"></div>
+
+                <!-- Raw Code View Container -->
+                <div id="code-block-wrapper" class="w-full h-full overflow-auto">
+                    <pre><code id="code-output" class="language-plaintext rounded-xl text-sm leading-relaxed text-slate-900 bg-slate-50 p-4 border border-slate-200 block min-w-max">Select a file from the left directory tree to inspect its contents.</code></pre>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const DEFAULT_CSV_URL = 'https://raw.githubusercontent.com/datasets/registry/master/data/registry.csv';
+
+        let repositories = [];
+        let currentOwner = '';
+        let currentRepo = '';
+        let currentBranch = '';
+        let currentFilePath = '';
+        let currentFileContent = '';
+        let currentFileName = '';
+        let isFileSupported = true;
+        let csvViewMode = 'table';
+        let rawGitTree = [];
+        let isSidebarOpen = true;
+
+        // Sidebar Resizing Logic
+        let isResizing = false;
+        const sidebar = document.getElementById('sidebar');
+
+        function initResize(e) {
+            isResizing = true;
+            document.addEventListener('mousemove', resizeSidebar);
+            document.addEventListener('mouseup', stopResize);
+            e.preventDefault();
+        }
+
+        function resizeSidebar(e) {
+            if (!isResizing) return;
+            const newWidth = e.clientX;
+            if (newWidth > 180 && newWidth < 600) {
+                sidebar.style.width = newWidth + 'px';
+            }
+        }
+
+        function stopResize() {
+            isResizing = false;
+            document.removeEventListener('mousemove', resizeSidebar);
+            document.removeEventListener('mouseup', stopResize);
+        }
+
+        window.onload = function () {
+            document.getElementById('csv-url').value = DEFAULT_CSV_URL;
+            loadInitialRepositories();
+        };
+
+        function toggleSettingsModal(open) {
+            const modal = document.getElementById('settings-modal');
+            if (open) {
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function toggleSidebar() {
+            isSidebarOpen = !isSidebarOpen;
+            const toggleIcon = document.getElementById('sidebar-toggle-icon');
+            const edgeTrigger = document.getElementById('edge-trigger');
+            if (isSidebarOpen) {
+                sidebar.style.transform = 'translateX(0)';
+                sidebar.style.width = '280px';
+                toggleIcon.className = 'fa-solid fa-bars text-lg';
+                edgeTrigger.style.display = 'none';
+            } else {
+                sidebar.style.transform = 'translateX(-100%)';
+                sidebar.style.width = '0px';
+                toggleIcon.className = 'fa-solid fa-bars-staggered text-lg';
+                edgeTrigger.style.display = 'block';
+            }
+        }
+
+        function handleEdgeHover() {
+            if (!isSidebarOpen) {
+                toggleSidebar();
+            }
+        }
+
+        async function loadInitialRepositories() {
+            try {
+                const response = await fetch(DEFAULT_CSV_URL);
+                if (response.ok) {
+                    const csvText = await response.text();
+                    parseCSV(csvText);
+                    return;
+                }
+            } catch (e) {
+                console.warn('Could not load DEFAULT_CSV_URL automatically. Using fallback sample repositories.');
+            }
+
+            repositories = [
+                { name: 'Hello World (Sample)', url: 'https://github.com/octocat/Hello-World' },
+                { name: 'Spoon-Knife', url: 'https://github.com/octocat/Spoon-Knife' }
+            ];
+            populateRepoDropdown();
+            showNotification('Loaded sample repositories. Click "Load Repositories" to add more!', 'success');
+        }
+
+        async function loadRepositoriesFromCSV() {
+            const urlInput = document.getElementById('csv-url').value.trim();
+            if (!urlInput) {
+                showNotification('Please enter a valid raw CSV URL.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(urlInput);
+                if (!response.ok) throw new Error('Failed to fetch CSV file from URL.');
+                const csvText = await response.text();
+                parseCSV(csvText);
+                toggleSettingsModal(false);
+            } catch (error) {
+                console.error(error);
+                showNotification('Error loading CSV. Check CORS or URL validity.', 'error');
+            }
+        }
+
+        function parseCSV(text) {
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+            repositories = [];
+
+            const startIndex = lines[0].toLowerCase().includes('repository name') ? 1 : 0;
+
+            for (let i = startIndex; i < lines.length; i++) {
+                const parts = lines[i].split(',').map(p => p.trim().replace(/^"|"$/g, ''));
+                if (parts.length >= 2) {
+                    repositories.push({ name: parts[0], url: parts[1] });
+                }
+            }
+
+            populateRepoDropdown();
+            if (repositories.length > 0) {
+                showNotification(`Successfully loaded ${repositories.length} repositories from CSV!`, 'success');
+            } else {
+                showNotification('No valid records found in CSV. Expected: Repository Name, Repository link', 'error');
+            }
+        }
+
+        function populateRepoDropdown() {
+            const select = document.getElementById('repo-select');
+            select.innerHTML = '<option value="">-- Choose a Repository --</option>';
+            
+            repositories.forEach((repo, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = repo.name;
+                select.appendChild(option);
+            });
+
+            resetBranchDropdown();
+            document.getElementById('file-tree-container').innerHTML = '<div class="text-center text-slate-500 text-xs mt-12 px-2">Select a repository to begin.</div>';
+        }
+
+        function loadDirectRepository() {
+            const rawUrl = document.getElementById('direct-repo-url').value.trim();
+            if (!rawUrl) {
+                showNotification('Please enter a GitHub repository URL.', 'error');
+                return;
+            }
+
+            const ghInfo = parseGitHubUrl(rawUrl);
+            if (!ghInfo) {
+                showNotification('Invalid GitHub repository URL format.', 'error');
+                return;
+            }
+
+            const customRepoName = `${ghInfo.owner}/${ghInfo.repo}`;
+            repositories.unshift({ name: customRepoName, url: rawUrl });
+            populateRepoDropdown();
+            
+            document.getElementById('repo-select').value = '0';
+            onRepoSelected();
+            toggleSettingsModal(false);
+            showNotification(`Loaded repository "${customRepoName}" directly!`, 'success');
+        }
+
+        function parseGitHubUrl(url) {
+            const match = url.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+            if (!match) return null;
+            return { owner: match[1], repo: match[2].replace('.git', '').replace(/\/$/, '') };
+        }
+
+        async function onRepoSelected() {
+            const index = document.getElementById('repo-select').value;
+            const branchSelect = document.getElementById('branch-select');
+            const treeContainer = document.getElementById('file-tree-container');
+            
+            if (index === '') {
+                resetBranchDropdown();
+                treeContainer.innerHTML = '<div class="text-center text-slate-500 text-xs mt-12 px-2">Select a repository to view its file structure.</div>';
+                return;
+            }
+
+            const repoObj = repositories[index];
+            const ghInfo = parseGitHubUrl(repoObj.url);
+
+            if (!ghInfo) {
+                showNotification('Invalid GitHub repository URL.', 'error');
+                return;
+            }
+
+            currentOwner = ghInfo.owner;
+            currentRepo = ghInfo.repo;
+
+            branchSelect.innerHTML = '<option value="">Loading branches...</option>';
+            branchSelect.disabled = true;
+            branchSelect.classList.add('opacity-50', 'cursor-not-allowed');
+
+            treeContainer.innerHTML = '<div class="text-center text-slate-500 text-xs mt-12"><i class="fa-solid fa-spinner fa-spin text-xl mb-2 block text-blue-600"></i>Fetching branches...</div>';
+
+            try {
+                const response = await fetch(`https://api.github.com/repos/${currentOwner}/${currentRepo}/branches`);
+                if (!response.ok) throw new Error('Failed to fetch branches. Ensure repository is public.');
+                
+                const branches = await response.json();
+                populateBranchDropdown(branches);
+            } catch (error) {
+                console.error(error);
+                branchSelect.innerHTML = '<option value="">Failed to load branches</option>';
+                treeContainer.innerHTML = `<div class="text-red-500 text-xs p-3 text-center">Error: ${error.message}</div>`;
+            }
+        }
+
+        function populateBranchDropdown(branches) {
+            const branchSelect = document.getElementById('branch-select');
+            branchSelect.innerHTML = '';
+
+            if (branches.length === 0) {
+                branchSelect.innerHTML = '<option value="">No branches found</option>';
+                return;
+            }
+
+            let defaultBranchName = branches[0].name;
+            const hasMain = branches.find(b => b.name === 'main');
+            const hasMaster = branches.find(b => b.name === 'master');
+            if (hasMain) defaultBranchName = 'main';
+            else if (hasMaster) defaultBranchName = 'master';
+
+            branches.forEach(branch => {
+                const option = document.createElement('option');
+                option.value = branch.name;
+                option.textContent = branch.name;
+                if (branch.name === defaultBranchName) {
+                    option.selected = true;
+                }
+                branchSelect.appendChild(option);
+            });
+
+            branchSelect.disabled = false;
+            branchSelect.classList.remove('opacity-50', 'cursor-not-allowed');
+
+            onBranchSelected();
+        }
+
+        function resetBranchDropdown() {
+            const branchSelect = document.getElementById('branch-select');
+            branchSelect.innerHTML = '<option value="">-- Select repository first --</option>';
+            branchSelect.disabled = true;
+            branchSelect.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+
+        async function onBranchSelected() {
+            const branchSelect = document.getElementById('branch-select');
+            currentBranch = branchSelect.value;
+            const treeContainer = document.getElementById('file-tree-container');
+
+            if (!currentBranch || !currentOwner || !currentRepo) return;
+
+            treeContainer.innerHTML = `<div class="text-center text-slate-500 text-xs mt-12"><i class="fa-solid fa-spinner fa-spin text-xl mb-2 block text-blue-600"></i>Loading tree for <span class="font-mono font-semibold text-blue-800">${currentBranch}</span>...</div>`;
+
+            try {
+                const apiUrl = `https://api.github.com/repos/${currentOwner}/${currentRepo}/git/trees/${currentBranch}?recursive=1`;
+                const response = await fetch(apiUrl);
+                if (!response.ok) throw new Error('Failed to fetch repository tree.');
+                
+                const data = await response.json();
+                rawGitTree = data.tree || [];
+                renderFileTree(rawGitTree);
+            } catch (error) {
+                console.error(error);
+                treeContainer.innerHTML = `<div class="text-red-500 text-xs p-3 text-center">Error loading file tree: ${error.message}</div>`;
+            }
+        }
+
+        function filterFileTree(query) {
+            const keyword = query.trim().toLowerCase();
+            if (!keyword) {
+                renderFileTree(rawGitTree);
+                return;
+            }
+
+            const filtered = rawGitTree.filter(item => item.path.toLowerCase().includes(keyword));
+            renderFileTree(filtered, true);
+        }
+
+        function renderFileTree(tree, isFiltered = false) {
+            const treeContainer = document.getElementById('file-tree-container');
+            treeContainer.innerHTML = '';
+
+            if (tree.length === 0) {
+                treeContainer.innerHTML = '<div class="text-center text-slate-500 text-xs mt-12 px-2">No matching files found.</div>';
+                return;
+            }
+
+            const root = { name: 'root', type: 'tree', children: {} };
+
+            tree.forEach(item => {
+                const parts = item.path.split('/');
+                let curr = root;
+                parts.forEach((part, idx) => {
+                    if (!curr.children[part]) {
+                        curr.children[part] = {
+                            name: part,
+                            path: item.path,
+                            type: (idx === parts.length - 1 && item.type === 'blob') ? 'blob' : 'tree',
+                            url: item.url,
+                            children: {}
+                        };
+                    }
+                    curr = curr.children[part];
+                });
+            });
+
+            function createHtmlTree(node) {
+                const ul = document.createElement('ul');
+                ul.className = 'space-y-1 pl-1 text-xs';
+
+                const sortedKeys = Object.keys(node.children).sort((a, b) => {
+                    const aType = node.children[a].type;
+                    const bType = node.children[b].type;
+                    if (aType !== bType) return aType === 'tree' ? -1 : 1;
+                    return a.localeCompare(b);
+                });
+
+                sortedKeys.forEach(key => {
+                    const child = node.children[key];
+                    const li = document.createElement('li');
+
+                    if (child.type === 'tree') {
+                        li.innerHTML = `
+                            <div class="flex items-center space-x-1.5 text-slate-800 py-1 px-1.5 rounded-lg hover:bg-blue-50 cursor-pointer select-none transition" onclick="toggleFolder(this)" title="${child.name}">
+                                <i class="fa-solid fa-folder text-blue-500 flex-shrink-0"></i>
+                                <span class="font-semibold truncate">${child.name}</span>
+                            </div>
+                        `;
+                        const subContainer = document.createElement('div');
+                        subContainer.className = `${isFiltered ? '' : 'hidden'} pl-3 border-l border-blue-100 mt-0.5`;
+                        subContainer.appendChild(createHtmlTree(child));
+                        li.appendChild(subContainer);
+                    } else {
+                        li.innerHTML = `
+                            <div class="flex items-center space-x-1.5 text-slate-700 py-1 px-1.5 rounded-lg hover:bg-blue-100/60 hover:text-blue-900 cursor-pointer transition" onclick="fetchFileContent('${child.path}')" title="${child.path}">
+                                <i class="fa-regular fa-file-code text-indigo-500 flex-shrink-0"></i>
+                                <span class="truncate font-medium">${child.name}</span>
+                            </div>
+                        `;
+                    }
+                    ul.appendChild(li);
+                });
+
+                return ul;
+            }
+
+            treeContainer.appendChild(createHtmlTree(root));
+        }
+
+        function toggleFolder(element) {
+            const subContainer = element.nextElementSibling;
+            const icon = element.querySelector('i');
+            if (subContainer) {
+                subContainer.classList.toggle('hidden');
+                icon.classList.toggle('fa-folder');
+                icon.classList.toggle('fa-folder-open');
+            }
+        }
+
+        async function fetchFileContent(path) {
+            currentFilePath = path;
+            currentFileName = path.split('/').pop();
+
+            const fileNameDisplay = document.getElementById('current-file-name-display');
+            const copyPathBtn = document.getElementById('copy-path-btn');
+            const branchBadge = document.getElementById('branch-badge');
+            const codeOutput = document.getElementById('code-output');
+            const unsupportedBanner = document.getElementById('unsupported-banner');
+            const copyBtn = document.getElementById('copy-btn');
+            const saveBtn = document.getElementById('save-folder-btn');
+            const downloadBtn = document.getElementById('download-btn');
+            const csvToggleContainer = document.getElementById('csv-view-toggle-container');
+            const csvTableContainer = document.getElementById('csv-table-container');
+            const codeBlockWrapper = document.getElementById('code-block-wrapper');
+
+            // Display ONLY the filename in the header with full path tooltip
+            fileNameDisplay.textContent = currentFileName;
+            fileNameDisplay.title = path;
+            copyPathBtn.classList.remove('hidden');
+            branchBadge.textContent = currentBranch;
+            branchBadge.classList.remove('hidden');
+
+            codeOutput.textContent = 'Loading file contents...';
+            unsupportedBanner.classList.add('hidden');
+            csvToggleContainer.classList.add('hidden');
+            csvTableContainer.classList.add('hidden');
+            codeBlockWrapper.classList.remove('hidden');
+
+            try {
+                const response = await fetch(`https://api.github.com/repos/${currentOwner}/${currentRepo}/contents/${path}?ref=${currentBranch}`);
+                if (!response.ok) throw new Error('Failed to retrieve file contents.');
+                
+                const data = await response.json();
+                const fileExt = currentFileName.split('.').pop().toLowerCase();
+
+                if (data.encoding === 'base64') {
+                    try {
+                        currentFileContent = decodeURIComponent(escape(atob(data.content)));
+                        isFileSupported = true;
+                    } catch (e) {
+                        isFileSupported = false;
+                        currentFileContent = atob(data.content);
+                    }
+                } else {
+                    currentFileContent = data.content || '';
+                    isFileSupported = true;
+                }
+
+                if (!isFileSupported) {
+                    unsupportedBanner.classList.remove('hidden');
+                    codeOutput.textContent = '[Binary or unsupported file format]';
+                } else {
+                    codeOutput.textContent = currentFileContent;
+                    
+                    // Show CSV grid toggle ONLY for .csv files (comma or pipe separated)
+                    if (fileExt === 'csv') {
+                        csvToggleContainer.classList.remove('hidden');
+                        csvToggleContainer.classList.add('flex');
+                        setCsvViewMode('table');
+                    } else {
+                        const hlLang = fileExt === 'js' ? 'javascript' : (fileExt === 'html' ? 'html' : (fileExt === 'css' ? 'css' : (fileExt === 'py' ? 'python' : 'plaintext')));
+                        codeOutput.className = `language-${hlLang} rounded-xl text-sm leading-relaxed text-slate-900 bg-slate-50 p-4 border border-slate-200 block min-w-max`;
+                        hljs.highlightElement(codeOutput);
+                    }
+                }
+
+                copyBtn.disabled = !isFileSupported;
+                copyBtn.classList.toggle('opacity-50', !isFileSupported);
+                copyBtn.classList.toggle('cursor-not-allowed', !isFileSupported);
+
+                saveBtn.disabled = false;
+                saveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                downloadBtn.disabled = false;
+                downloadBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+            } catch (error) {
+                console.error(error);
+                codeOutput.textContent = `Error loading file: ${error.message}`;
+            }
+        }
+
+        function setCsvViewMode(mode) {
+            csvViewMode = mode;
+            const btnTable = document.getElementById('btn-view-table');
+            const btnRaw = document.getElementById('btn-view-raw');
+            const tableContainer = document.getElementById('csv-table-container');
+            const codeBlockWrapper = document.getElementById('code-block-wrapper');
+
+            if (mode === 'table') {
+                btnTable.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-blue-600 text-white shadow-sm transition';
+                btnRaw.className = 'px-3 py-1 rounded-lg text-xs font-bold text-blue-900 hover:bg-blue-200/50 transition';
+                tableContainer.classList.remove('hidden');
+                codeBlockWrapper.classList.add('hidden');
+                renderCsvGridTable();
+            } else {
+                btnRaw.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-blue-600 text-white shadow-sm transition';
+                btnTable.className = 'px-3 py-1 rounded-lg text-xs font-bold text-blue-900 hover:bg-blue-200/50 transition';
+                tableContainer.classList.add('hidden');
+                codeBlockWrapper.classList.remove('hidden');
+                const codeOutput = document.getElementById('code-output');
+                codeOutput.textContent = currentFileContent;
+            }
+        }
+
+        function renderCsvGridTable() {
+            const tableContainer = document.getElementById('csv-table-container');
+            const lines = currentFileContent.split('\n').map(l => l.trim()).filter(l => l);
+            
+            if (lines.length === 0) {
+                tableContainer.innerHTML = '<div class="text-slate-500 text-center p-6 text-xs">Empty CSV file</div>';
+                return;
+            }
+
+            const firstLine = lines[0];
+            const delimiter = firstLine.includes('|') ? '|' : ',';
+
+            const parseRow = (rowStr, delim) => {
+                const result = [];
+                let insideQuote = false;
+                let entry = '';
+                for (let i = 0; i < rowStr.length; i++) {
+                    const char = rowStr[i];
+                    if (char === '"' || char === "'") {
+                        insideQuote = !insideQuote;
+                    } else if (char === delim && !insideQuote) {
+                        result.push(entry.trim().replace(/^["']|["']$/g, ''));
+                        entry = '';
+                    } else {
+                        entry += char;
+                    }
+                }
+                result.push(entry.trim().replace(/^["']|["']$/g, ''));
+                return result;
+            };
+
+            const headers = parseRow(lines[0], delimiter);
+            const rows = lines.slice(1).map(line => parseRow(line, delimiter));
+
+            let html = `
+                <div class="inline-block min-w-full align-middle">
+                    <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm bg-white">
+                        <table class="min-w-full border-collapse text-left text-xs whitespace-nowrap">
+                            <thead>
+                                <tr class="bg-blue-50 border-b border-blue-200 text-blue-900 font-bold">
+                                    <th class="p-3 border-r border-blue-200 text-slate-400 w-12 text-center sticky left-0 bg-blue-50">#</th>
+                                    ${headers.map(h => `<th class="p-3 border-r border-blue-200 last:border-r-0">${escapeHtml(h)}</th>`).join('')}
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200 text-slate-800">
+            `;
+
+            if (rows.length === 0) {
+                html += `<tr><td colspan="${headers.length + 1}" class="p-4 text-center text-slate-400">No data rows found</td></tr>`;
+            } else {
+                rows.forEach((row, idx) => {
+                    html += `<tr class="hover:bg-slate-50 transition">`;
+                    html += `<td class="p-3 border-r border-slate-200 text-slate-400 text-center font-mono sticky left-0 bg-white">${idx + 1}</td>`;
+                    headers.forEach((_, hIdx) => {
+                        html += `<td class="p-3 border-r border-slate-200 last:border-r-0">${escapeHtml(row[hIdx] || '')}</td>`;
+                    });
+                    html += `</tr>`;
+                });
+            }
+
+            html += `</tbody></table></div></div>`;
+            tableContainer.innerHTML = html;
+        }
+
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function changeCodeTheme(themeName) {
+            const themeMap = {
+                'github': 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css',
+                'vs': 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/vs.min.css',
+                'atom-one-light': 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-light.min.css',
+                'stackoverflow-light': 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/stackoverflow-light.min.css'
+            };
+            document.getElementById('highlight-theme-link').href = themeMap[themeName] || themeMap['github'];
+        }
+
+        function copyFileContent() {
+            if (!currentFileContent || !isFileSupported) return;
+            
+            const textArea = document.createElement('textarea');
+            textArea.value = currentFileContent;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showNotification('File code copied to clipboard!', 'success');
+            } catch (err) {
+                showNotification('Failed to copy code.', 'error');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function copyFilePath() {
+            if (!currentFilePath) return;
+            const textArea = document.createElement('textarea');
+            textArea.value = currentFilePath;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showNotification('Complete file path copied to clipboard!', 'success');
+            } catch (err) {
+                showNotification('Failed to copy file path.', 'error');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function downloadCurrentFile() {
+            if (!currentFileContent && currentFileContent !== '') return;
+            let blob;
+            if (isFileSupported) {
+                blob = new Blob([currentFileContent], { type: 'text/plain;charset=utf-8' });
+            } else {
+                const bytes = new Uint8Array(currentFileContent.length);
+                for (let i = 0; i < currentFileContent.length; i++) {
+                    bytes[i] = currentFileContent.charCodeAt(i);
+                }
+                blob = new Blob([bytes], { type: 'application/octet-stream' });
+            }
+
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = currentFileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showNotification(`Downloading "${currentFileName}"...`, 'success');
+        }
+
+        async function saveToFolder() {
+            if (!currentFileContent && currentFileContent !== '') return;
+
+            if ('showDirectoryPicker' in window) {
+                try {
+                    const dirHandle = await window.showDirectoryPicker();
+                    const fileHandle = await dirHandle.getFileHandle(currentFileName, { create: true });
+                    const writableStream = await fileHandle.createWritable();
+                    
+                    if (isFileSupported) {
+                        await writableStream.write(currentFileContent);
+                    } else {
+                        const bytes = new Uint8Array(currentFileContent.length);
+                        for (let i = 0; i < currentFileContent.length; i++) {
+                            bytes[i] = currentFileContent.charCodeAt(i);
+                        }
+                        await writableStream.write(bytes);
+                    }
+                    await writableStream.close();
+                    showNotification(`Successfully saved "${currentFileName}" to folder!`, 'success');
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        console.error(error);
+                        showNotification('Error saving file to folder.', 'error');
+                    }
+                }
+            } else {
+                showNotification('Browser does not support File System Access API. Downloading instead.', 'error');
+                downloadCurrentFile();
+            }
+        }
+
+        function showNotification(message, type) {
+            const existing = document.getElementById('custom-notification');
+            if (existing) existing.remove();
+
+            const notif = document.createElement('div');
+            notif.id = 'custom-notification';
+            notif.className = `fixed bottom-5 right-5 z-50 px-4 py-3 rounded-2xl shadow-xl text-xs font-semibold flex items-center space-x-2 border transition-all transform translate-y-2 opacity-0 ${
+                type === 'success' 
+                    ? 'bg-blue-50 border-blue-200 text-blue-900' 
+                    : 'bg-rose-50 border-rose-200 text-rose-900'
+            }`;
+            notif.innerHTML = `
+                <i class="fa-solid ${type === 'success' ? 'fa-circle-check text-blue-600' : 'fa-circle-exclamation text-rose-600'} text-sm"></i>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(notif);
+
+            setTimeout(() => {
+                notif.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                notif.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => notif.remove(), 300);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
