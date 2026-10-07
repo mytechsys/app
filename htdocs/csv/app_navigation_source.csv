@@ -1,3 +1,4 @@
 name,description,path
 Oracle HDL Studio,Apps to create HDL loads,/app/htdocs/html/hdlstudio.html
 Script Base,Application Central Code Repository,/app/htdocs/html/scriptbase.html
+File Explorer,GitHub File Explorer,/app/htdocs/html/fileexplorer.html
