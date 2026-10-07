@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub Repo Explorer & CSV Grid Viewer</title>
+    <title>File Explorer</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -59,7 +59,7 @@
                 <i class="fa-brands fa-github text-2xl"></i>
             </div>
             <div>
-                <h1 class="text-lg font-bold tracking-tight text-blue-900">GitHub Repo Explorer</h1>
+                <h1 class="text-lg font-bold tracking-tight text-blue-900">File Explorer</h1>
                 <p class="text-xs text-blue-600/70 font-medium">Repository, Branch, File & CSV Grid Inspector</p>
             </div>
         </div>
@@ -249,7 +249,7 @@
     </div>
 
     <script>
-        const DEFAULT_CSV_URL = 'https://raw.githubusercontent.com/datasets/registry/master/data/registry.csv';
+        const DEFAULT_CSV_URL = 'https://raw.githubusercontent.com/mytechsys/app/refs/heads/main/htdocs/csv/fileexplorer.csv';
 
         let repositories = [];
         let currentOwner = '';
