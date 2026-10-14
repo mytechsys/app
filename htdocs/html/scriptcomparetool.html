@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Script Compare Tool - Code & Text Difference Checker</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#151f32',
+                            950: '#0b0f19'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .code-font { font-family: 'JetBrains Mono', monospace; }
+        /* Custom scrollbars */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
+        ::-webkit-scrollbar-thumb { background: rgba(150,150,150,0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(150,150,150,0.5); }
+    </style>
+</head>
+<body class="h-full bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-200 flex flex-col overflow-hidden">
+
+    <!-- Header Navigation -->
+    <header class="flex-none bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 lg:px-6 py-3 flex items-center justify-between z-20">
+        <div class="flex items-center space-x-3">
+            <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-md flex items-center justify-center">
+                <i data-lucide="git-compare" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">Script Compare Tool</h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Fast & precise script comparison tool</p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-2 sm:space-x-3">
+            <button id="toggle-history-btn" class="flex items-center space-x-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                <i data-lucide="history" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">History</span>
+                <span id="history-badge" class="ml-1 px-1.5 py-0.5 text-xs bg-indigo-600 text-white rounded-full">0</span>
+            </button>
+            <button id="theme-toggle-btn" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" title="Toggle Theme">
+                <i data-lucide="sun" class="w-4 h-4 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-4 h-4 block dark:hidden"></i>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex-1 flex overflow-hidden relative">
+        
+        <!-- History Sidebar Drawer -->
+        <aside id="history-sidebar" class="absolute inset-y-0 left-0 z-30 w-80 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col shadow-2xl">
+            <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="history" class="w-5 h-5 text-indigo-500"></i>
+                    <h2 class="font-semibold text-slate-800 dark:text-slate-200">Comparison History</h2>
+                </div>
+                <div class="flex items-center space-x-1">
+                    <button id="clear-history-btn" class="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Clear All History">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                    <button id="close-history-btn" class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="history-list" class="flex-1 overflow-y-auto p-3 space-y-2.5">
+                <!-- Dynamically populated history cards -->
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex flex-col overflow-hidden">
+            
+            <!-- Input & Configuration Toolbar -->
+            <section class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 shadow-sm">
+                <div class="max-w-7xl mx-auto flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+                    
+                    <!-- File Inputs / Dropzones -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
+                        <!-- Original File Card -->
+                        <div class="relative border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 rounded-xl p-3 bg-slate-50 dark:bg-slate-850 transition-colors group" id="drop-zone-1">
+                            <input type="file" id="file-input-1" class="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2.5">
+                                    <div class="p-2 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 rounded-lg">
+                                        <i data-lucide="file-code" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <p id="file-name-1" class="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate max-w-[140px] sm:max-w-[180px]">Original Script</p>
+                                        <p class="text-[10px] text-slate-400">Drag & drop or click</p>
+                                    </div>
+                                </div>
+                                <button onclick="openEditorModal(1)" class="relative z-20 px-2.5 py-1 text-xs font-medium bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-xs">
+                                    Edit Text
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Modified File Card -->
+                        <div class="relative border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 rounded-xl p-3 bg-slate-50 dark:bg-slate-850 transition-colors group" id="drop-zone-2">
+                            <input type="file" id="file-input-2" class="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2.5">
+                                    <div class="p-2 bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 rounded-lg">
+                                        <i data-lucide="file-code" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <p id="file-name-2" class="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate max-w-[140px] sm:max-w-[180px]">Modified Script</p>
+                                        <p class="text-[10px] text-slate-400">Drag & drop or click</p>
+                                    </div>
+                                </div>
+                                <button onclick="openEditorModal(2)" class="relative z-20 px-2.5 py-1 text-xs font-medium bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-xs">
+                                    Edit Text
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Controls & View Mode Toggles -->
+                    <div class="flex flex-wrap items-center gap-2.5 justify-end">
+                        <!-- View Switcher -->
+                        <div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                            <button id="view-side-btn" onclick="switchViewMode('side')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs transition-all">Side-by-Side</button>
+                            <button id="view-unified-btn" onclick="switchViewMode('unified')" class="px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all">Unified</button>
+                        </div>
+
+                        <!-- Compare Button -->
+                        <button id="compare-btn" onclick="runComparison()" class="flex items-center space-x-2 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-md shadow-indigo-500/20 active:scale-95 transition-all">
+                            <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+                            <span>Compare</span>
+                        </button>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- Statistics Summary Bar -->
+            <section id="stats-bar" class="bg-slate-100/70 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 px-6 py-2.5 flex items-center justify-between text-xs hidden">
+                <div class="flex items-center space-x-4 sm:space-x-6">
+                    <span class="flex items-center space-x-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        <span id="stat-additions">0 Additions</span>
+                    </span>
+                    <span class="flex items-center space-x-1.5 text-rose-600 dark:text-rose-400 font-medium">
+                        <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                        <span id="stat-deletions">0 Deletions</span>
+                    </span>
+                    <span class="flex items-center space-x-1.5 text-slate-500 dark:text-slate-400 font-medium">
+                        <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                        <span id="stat-unchanged">0 Unchanged</span>
+                    </span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="copyDiffResult()" class="flex items-center space-x-1 px-2.5 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg text-slate-700 dark:text-slate-300 font-medium transition-colors">
+                        <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                        <span class="hidden sm:inline">Copy Diff</span>
+                    </button>
+                    <button onclick="exportDiffReport()" class="flex items-center space-x-1 px-2.5 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg text-slate-700 dark:text-slate-300 font-medium transition-colors">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                        <span class="hidden sm:inline">Export Report</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Viewer Area & Empty State -->
+            <div class="flex-1 overflow-hidden relative bg-white dark:bg-slate-950 flex flex-col">
+                <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 bg-white dark:bg-slate-950">
+                    <div class="w-16 h-16 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-500 rounded-2xl flex items-center justify-center mb-4 shadow-inner">
+                        <i data-lucide="file-diff" class="w-8 h-8"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100 mb-1">Welcome to Script Compare Tool</h2>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 max-w-md mb-6">Upload any two files or edit text directly to analyze line-by-line differences instantly.</p>
+                    <div class="flex flex-wrap gap-3 justify-center">
+                        <button onclick="loadSampleData('code')" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors flex items-center space-x-2">
+                            <i data-lucide="code" class="w-4 h-4 text-indigo-500"></i>
+                            <span>Load Sample JavaScript</span>
+                        </button>
+                        <button onclick="loadSampleData('config')" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors flex items-center space-x-2">
+                            <i data-lucide="file-text" class="w-4 h-4 text-purple-500"></i>
+                            <span>Load Sample Config</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Diff Table Container -->
+                <div id="diff-viewer-container" class="flex-1 overflow-auto hidden"></div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Text Editor Modal -->
+    <div id="editor-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden max-h-[90vh]">
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="edit-3" class="w-5 h-5 text-indigo-500"></i>
+                    <h3 id="modal-title" class="font-bold text-slate-800 dark:text-slate-100">Edit Script Content</h3>
+                </div>
+                <button onclick="closeEditorModal()" class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-4 flex-1 flex flex-col overflow-hidden">
+                <textarea id="modal-textarea" class="w-full h-96 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 code-font text-xs resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Paste or type script content here..."></textarea>
+            </div>
+            <div class="px-6 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex items-center justify-end space-x-3">
+                <button onclick="closeEditorModal()" class="px-4 py-2 rounded-xl text-sm font-medium bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors">Cancel</button>
+                <button onclick="saveModalContent()" class="px-5 py-2 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-500/20 transition-all">Save Content</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 flex items-center space-x-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-3 rounded-xl shadow-xl font-medium text-sm">
+        <i id="toast-icon" data-lucide="check-circle" class="w-4 h-4 text-emerald-400 dark:text-emerald-600"></i>
+        <span id="toast-message">Notification message</span>
+    </div>
+
+    <!-- Application Logic Scripts -->
+    <script>
+        // State management
+        let file1Data = { name: "Original Script", content: "" };
+        let file2Data = { name: "Modified Script", content: "" };
+        let currentEditingFile = 1;
+        let currentViewMode = 'side'; // 'side' or 'unified'
+        let historyList = [];
+        let lastDiffResult = null;
+
+        // Initialize icons and theme on load
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            initTheme();
+            loadHistoryFromStorage();
+            setupDragAndDrop();
+        });
+
+        // Dark/Light Theme management
+        function initTheme() {
+            const isDark = localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        document.getElementById('theme-toggle-btn').addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        });
+
+        // History Sidebar toggles
+        const historySidebar = document.getElementById('history-sidebar');
+        document.getElementById('toggle-history-btn').addEventListener('click', () => {
+            historySidebar.classList.toggle('-translate-x-full');
+        });
+        document.getElementById('close-history-btn').addEventListener('click', () => {
+            historySidebar.classList.add('-translate-x-full');
+        });
+
+        // Drag & Drop / File Input setup
+        function setupDragAndDrop() {
+            setupFileHandlers(1, document.getElementById('drop-zone-1'), document.getElementById('file-input-1'), document.getElementById('file-name-1'));
+            setupFileHandlers(2, document.getElementById('drop-zone-2'), document.getElementById('file-input-2'), document.getElementById('file-name-2'));
+        }
+
+        function setupFileHandlers(fileNum, dropZone, fileInput, fileNameEl) {
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) readFileContent(file, fileNum, fileNameEl);
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('border-indigo-500', 'bg-indigo-50/50', 'dark:bg-indigo-950/20');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('border-indigo-500', 'bg-indigo-50/50', 'dark:bg-indigo-950/20');
+                }, false);
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const file = dt.files[0];
+                if (file) readFileContent(file, fileNum, fileNameEl);
+            });
+        }
+
+        function readFileContent(file, fileNum, fileNameEl) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                if (fileNum === 1) {
+                    file1Data.name = file.name;
+                    file1Data.content = content;
+                    fileNameEl.textContent = file.name;
+                } else {
+                    file2Data.name = file.name;
+                    file2Data.content = content;
+                    fileNameEl.textContent = file.name;
+                }
+                showToast(`Loaded ${file.name} successfully`);
+            };
+            reader.readAsText(file);
+        }
+
+        // Modal Text Editor functions
+        function openEditorModal(fileNum) {
+            currentEditingFile = fileNum;
+            const titleEl = document.getElementById('modal-title');
+            const textareaEl = document.getElementById('modal-textarea');
+            if (fileNum === 1) {
+                titleEl.textContent = `Edit Original Script (${file1Data.name})`;
+                textareaEl.value = file1Data.content;
+            } else {
+                titleEl.textContent = `Edit Modified Script (${file2Data.name})`;
+                textareaEl.value = file2Data.content;
+            }
+            document.getElementById('editor-modal').classList.remove('hidden');
+        }
+
+        function closeEditorModal() {
+            document.getElementById('editor-modal').classList.add('hidden');
+        }
+
+        function saveModalContent() {
+            const text = document.getElementById('modal-textarea').value;
+            if (currentEditingFile === 1) {
+                file1Data.content = text;
+                document.getElementById('file-name-1').textContent = file1Data.name;
+            } else {
+                file2Data.content = text;
+                document.getElementById('file-name-2').textContent = file2Data.name;
+            }
+            closeEditorModal();
+            showToast('Content updated successfully');
+        }
+
+        // View Mode Switcher
+        function switchViewMode(mode) {
+            currentViewMode = mode;
+            const sideBtn = document.getElementById('view-side-btn');
+            const unifiedBtn = document.getElementById('view-unified-btn');
+            if (mode === 'side') {
+                sideBtn.className = "px-3 py-1.5 text-xs font-semibold rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs transition-all";
+                unifiedBtn.className = "px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all";
+            } else {
+                unifiedBtn.className = "px-3 py-1.5 text-xs font-semibold rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs transition-all";
+                sideBtn.className = "px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all";
+            }
+            if (lastDiffResult) {
+                renderDiff(lastDiffResult);
+            }
+        }
+
+        // Sample Data Loader
+        function loadSampleData(type) {
+            if (type === 'code') {
+                file1Data.name = "auth_v1.js";
+                file1Data.content = `function authenticateUser(req, res) {\n    const { username, password } = req.body;\n    if (!username || !password) {\n        return res.status(400).send("Missing credentials");\n    }\n    const user = db.findUser(username);\n    if (user && user.password === password) {\n        return res.json({ token: generateToken(user) });\n    }\n    return res.status(401).send("Invalid login");\n}`;
+                
+                file2Data.name = "auth_v2.js";
+                file2Data.content = `async function authenticateUser(req, res) {\n    const { username, password } = req.body;\n    if (!username || !password) {\n        return res.status(400).json({ error: "Missing credentials" });\n    }\n    const user = await db.findUserAsync(username);\n    if (user && await bcrypt.compare(password, user.passwordHash)) {\n        const token = generateToken(user);\n        logAuditTrail(user.id, "LOGIN_SUCCESS");\n        return res.json({ token, expiresIn: "1h" });\n    }\n    return res.status(401).json({ error: "Invalid login credentials" });\n}`;
+            } else {
+                file1Data.name = "config.json";
+                file1Data.content = `{\n  "env": "development",\n  "port": 3000,\n  "database": {\n    "host": "localhost",\n    "name": "dev_db"\n  },\n  "debug": true\n}`;
+
+                file2Data.name = "config.json";
+                file2Data.content = `{\n  "env": "production",\n  "port": 8080,\n  "database": {\n    "host": "cluster.db.internal",\n    "name": "prod_db",\n    "ssl": true\n  },\n  "debug": false,\n  "clusterMode": true\n}`;
+            }
+
+            document.getElementById('file-name-1').textContent = file1Data.name;
+            document.getElementById('file-name-2').textContent = file2Data.name;
+            runComparison();
+        }
+
+        // Myers Diff Algorithm (LCS Based)
+        function computeDiff(lines1, lines2) {
+            const n = lines1.length;
+            const m = lines2.length;
+            
+            const dp = Array(n + 1).fill(0).map(() => Array(m + 1).fill(0));
+            
+            for (let i = 1; i <= n; i++) {
+                for (let j = 1; j <= m; j++) {
+                    if (lines1[i - 1] === lines2[j - 1]) {
+                        dp[i][j] = dp[i - 1][j - 1] + 1;
+                    } else {
+                        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+                    }
+                }
+            }
+
+            let i = n, j = m;
+            const ops = [];
+            
+            while (i > 0 || j > 0) {
+                if (i > 0 && j > 0 && lines1[i - 1] === lines2[j - 1]) {
+                    ops.unshift({ type: 'equal', text: lines1[i - 1], line1: i, line2: j });
+                    i--;
+                    j--;
+                } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+                    ops.unshift({ type: 'insert', text: lines2[j - 1], line1: null, line2: j });
+                    j--;
+                } else if (i > 0 && (j === 0 || dp[i][j - 1] < dp[i - 1][j])) {
+                    ops.unshift({ type: 'delete', text: lines1[i - 1], line1: i, line2: null });
+                    i--;
+                }
+            }
+            return ops;
+        }
+
+        // Execute Comparison
+        function runComparison() {
+            const lines1 = file1Data.content.split(/\r?\n/);
+            const lines2 = file2Data.content.split(/\r?\n/);
+
+            if (file1Data.content === "" && file2Data.content === "") {
+                showToast('Please provide content for at least one file', 'error');
+                return;
+            }
+
+            const diffOps = computeDiff(lines1, lines2);
+
+            let additions = 0;
+            let deletions = 0;
+            let unchanged = 0;
+
+            diffOps.forEach(op => {
+                if (op.type === 'insert') additions++;
+                else if (op.type === 'delete') deletions++;
+                else if (op.type === 'equal') unchanged++;
+            });
+
+            lastDiffResult = {
+                file1Name: file1Data.name,
+                file2Name: file2Data.name,
+                file1Content: file1Data.content,
+                file2Content: file2Data.content,
+                ops: diffOps,
+                stats: { additions, deletions, unchanged },
+                timestamp: new Date().toISOString()
+            };
+
+            // Update stats UI
+            document.getElementById('stat-additions').textContent = `${additions} Additions`;
+            document.getElementById('stat-deletions').textContent = `${deletions} Deletions`;
+            document.getElementById('stat-unchanged').textContent = `${unchanged} Unchanged`;
+            document.getElementById('stats-bar').classList.remove('hidden');
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('diff-viewer-container').classList.remove('hidden');
+
+            renderDiff(lastDiffResult);
+            saveToHistory(lastDiffResult);
+            showToast('Comparison completed successfully');
+        }
+
+        // Render Diff Table Layouts
+        function renderDiff(result) {
+            const container = document.getElementById('diff-viewer-container');
+            container.innerHTML = '';
+
+            if (currentViewMode === 'side') {
+                renderSideBySide(result.ops, container);
+            } else {
+                renderUnified(result.ops, container);
+            }
+        }
+
+        function renderSideBySide(ops, container) {
+            const table = document.createElement('table');
+            table.className = "w-full border-collapse code-font text-xs";
+            
+            let html = `<thead><tr class="bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-slate-500 font-semibold sticky top-0 z-10">
+                <th class="w-12 py-2 px-2 text-right border-r border-slate-200 dark:border-slate-800">#</th>
+                <th class="py-2 px-4 text-left border-r border-slate-200 dark:border-slate-800">${escapeHtml(file1Data.name)}</th>
+                <th class="w-12 py-2 px-2 text-right border-r border-slate-200 dark:border-slate-800">#</th>
+                <th class="py-2 px-4 text-left">${escapeHtml(file2Data.name)}</th>
+            </tr></thead><tbody>`;
+
+            let i = 0;
+            while (i < ops.length) {
+                const op = ops[i];
+                if (op.type === 'equal') {
+                    html += `<tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50">
+                        <td class="py-1 px-2 text-right text-slate-400 select-none border-r border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30">${op.line1 || ''}</td>
+                        <td class="py-1 px-4 text-slate-800 dark:text-slate-200 border-r border-slate-100 dark:border-slate-800 whitespace-pre-wrap">${escapeHtml(op.text)}</td>
+                        <td class="py-1 px-2 text-right text-slate-400 select-none border-r border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30">${op.line2 || ''}</td>
+                        <td class="py-1 px-4 text-slate-800 dark:text-slate-200 whitespace-pre-wrap">${escapeHtml(op.text)}</td>
+                    </tr>`;
+                    i++;
+                } else {
+                    const dels = [];
+                    const inss = [];
+                    while (i < ops.length && (ops[i].type === 'delete' || ops[i].type === 'insert')) {
+                        if (ops[i].type === 'delete') dels.push(ops[i]);
+                        else inss.push(ops[i]);
+                        i++;
+                    }
+
+                    const maxLen = Math.max(dels.length, inss.length);
+                    for (let k = 0; k < maxLen; k++) {
+                        const del = dels[k];
+                        const ins = inss[k];
+                        
+                        const delLine = del ? (del.line1 || '') : '';
+                        const delText = del ? del.text : '';
+                        const delClass = del ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-200 border-r border-slate-100 dark:border-slate-800' : 'bg-slate-50/20 dark:bg-slate-900/10 border-r border-slate-100 dark:border-slate-800';
+                        
+                        const insLine = ins ? (ins.line2 || '') : '';
+                        const insText = ins ? ins.text : '';
+                        const insClass = ins ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200' : 'bg-slate-50/20 dark:bg-slate-900/10';
+
+                        html += `<tr class="hover:opacity-90">
+                            <td class="py-1 px-2 text-right text-slate-400 select-none border-r border-slate-100 dark:border-slate-800 bg-rose-100/40 dark:bg-rose-950/20">${delLine}</td>
+                            <td class="py-1 px-4 whitespace-pre-wrap ${delClass}">${escapeHtml(delText)}</td>
+                            <td class="py-1 px-2 text-right text-slate-400 select-none border-r border-slate-100 dark:border-slate-800 bg-emerald-100/40 dark:bg-emerald-950/20">${insLine}</td>
+                            <td class="py-1 px-4 whitespace-pre-wrap ${insClass}">${escapeHtml(insText)}</td>
+                        </tr>`;
+                    }
+                }
+            }
+
+            html += `</tbody>`;
+            table.innerHTML = html;
+            container.appendChild(table);
+        }
+
+        function renderUnified(ops, container) {
+            const table = document.createElement('table');
+            table.className = "w-full border-collapse code-font text-xs";
+            
+            let html = `<thead><tr class="bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-slate-500 font-semibold sticky top-0 z-10">
+                <th class="w-12 py-2 px-2 text-right border-r border-slate-200 dark:border-slate-800">L1</th>
+                <th class="w-12 py-2 px-2 text-right border-r border-slate-200 dark:border-slate-800">L2</th>
+                <th class="w-8 py-2 px-1 text-center border-r border-slate-200 dark:border-slate-800">Op</th>
+                <th class="py-2 px-4 text-left">Content</th>
+            </tr></thead><tbody>`;
+
+            ops.forEach(op => {
+                let bgClass = "hover:bg-slate-50 dark:hover:bg-slate-900/50";
+                let sign = " ";
+                let symbolClass = "text-slate-400";
+                
+                if (op.type === 'insert') {
+                    bgClass = "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200";
+                    sign = "+";
+                    symbolClass = "text-emerald-600 dark:text-emerald-400 font-bold";
+                } else if (op.type === 'delete') {
+                    bgClass = "bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-200";
+                    sign = "-";
+                    symbolClass = "text-rose-600 dark:text-rose-400 font-bold";
+                }
+
+                html += `<tr class="${bgClass}">
+                    <td class="py-1 px-2 text-right text-slate-400 select-none border-r border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30">${op.line1 || ''}</td>
+                    <td class="py-1 px-2 text-right text-slate-400 select-none border-r border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30">${op.line2 || ''}</td>
+                    <td class="py-1 px-1 text-center select-none border-r border-slate-100 dark:border-slate-800 ${symbolClass}">${sign}</td>
+                    <td class="py-1 px-4 whitespace-pre-wrap">${escapeHtml(op.text)}</td>
+                </tr>`;
+            });
+
+            html += `</tbody>`;
+            table.innerHTML = html;
+            container.appendChild(table);
+        }
+
+        // Copy & Export functionalities
+        function copyDiffResult() {
+            if (!lastDiffResult) return;
+            const diffText = lastDiffResult.ops.map(op => {
+                const prefix = op.type === 'insert' ? '+ ' : op.type === 'delete' ? '- ' : '  ';
+                return prefix + op.text;
+            }).join('\n');
+
+            const textarea = document.createElement('textarea');
+            textarea.value = diffText;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast('Diff copied to clipboard');
+            } catch (err) {
+                showToast('Failed to copy', 'error');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function exportDiffReport() {
+            if (!lastDiffResult) return;
+            const report = `=== SCRIPT COMPARE TOOL REPORT ===\nGenerated: ${new Date(lastDiffResult.timestamp).toLocaleString()}\nOriginal: ${lastDiffResult.file1Name}\nModified: ${lastDiffResult.file2Name}\n\nStats:\n- Additions: ${lastDiffResult.stats.additions}\n- Deletions: ${lastDiffResult.stats.deletions}\n- Unchanged: ${lastDiffResult.stats.unchanged}\n\n=== DIFF DETAILS ===\n` + 
+                lastDiffResult.ops.map(op => {
+                    const prefix = op.type === 'insert' ? '+ ' : op.type === 'delete' ? '- ' : '  ';
+                    return `${prefix}${op.text}`;
+                }).join('\n');
+
+            const blob = new Blob([report], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `script-compare-tool-report-${Date.now()}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Diff report exported successfully');
+        }
+
+        // Local Storage History management
+        function saveToHistory(result) {
+            historyList = historyList.filter(item => !(item.file1Content === result.file1Content && item.file2Content === result.file2Content));
+            historyList.unshift(result);
+            if (historyList.length > 20) historyList.pop();
+            localStorage.setItem('script_compare_tool_history', JSON.stringify(historyList));
+            updateHistoryUI();
+        }
+
+        function loadHistoryFromStorage() {
+            const saved = localStorage.getItem('script_compare_tool_history') || localStorage.getItem('compare_script_history') || localStorage.getItem('script_diff_history');
+            if (saved) {
+                try {
+                    historyList = JSON.parse(saved);
+                    updateHistoryUI();
+                } catch (e) {
+                    historyList = [];
+                }
+            }
+        }
+
+        function updateHistoryUI() {
+            const listEl = document.getElementById('history-list');
+            const badgeEl = document.getElementById('history-badge');
+            badgeEl.textContent = historyList.length;
+
+            if (historyList.length === 0) {
+                listEl.innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">No previous comparisons yet.</div>`;
+                return;
+            }
+
+            listEl.innerHTML = historyList.map((item, index) => `
+                <div class="p-3 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-indigo-500 dark:hover:border-indigo-500 transition-all group">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate max-w-[160px]">${escapeHtml(item.file1Name)} vs ${escapeHtml(item.file2Name)}</span>
+                        <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="reloadHistoryItem(${index})" class="p-1 text-slate-400 hover:text-indigo-600 rounded" title="Reload">
+                                <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="deleteHistoryItem(event, ${index})" class="p-1 text-slate-400 hover:text-red-500 rounded" title="Delete">
+                                <i data-lucide="trash" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between text-[10px] text-slate-400">
+                        <span>${new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        <div class="flex space-x-2 font-medium">
+                            <span class="text-emerald-600 dark:text-emerald-400">+${item.stats.additions}</span>
+                            <span class="text-rose-600 dark:text-rose-400">-${item.stats.deletions}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function reloadHistoryItem(index) {
+            const item = historyList[index];
+            if (!item) return;
+            file1Data.name = item.file1Name;
+            file1Data.content = item.file1Content;
+            file2Data.name = item.file2Name;
+            file2Data.content = item.file2Content;
+
+            document.getElementById('file-name-1').textContent = item.file1Name;
+            document.getElementById('file-name-2').textContent = item.file2Name;
+
+            lastDiffResult = item;
+            document.getElementById('stat-additions').textContent = `${item.stats.additions} Additions`;
+            document.getElementById('stat-deletions').textContent = `${item.stats.deletions} Deletions`;
+            document.getElementById('stat-unchanged').textContent = `${item.stats.unchanged} Unchanged`;
+            document.getElementById('stats-bar').classList.remove('hidden');
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('diff-viewer-container').classList.remove('hidden');
+
+            renderDiff(item);
+            document.getElementById('history-sidebar').classList.add('-translate-x-full');
+            showToast('Loaded past comparison session');
+        }
+
+        function deleteHistoryItem(e, index) {
+            e.stopPropagation();
+            historyList.splice(index, 1);
+            localStorage.setItem('script_compare_tool_history', JSON.stringify(historyList));
+            updateHistoryUI();
+            showToast('History item removed');
+        }
+
+        document.getElementById('clear-history-btn').addEventListener('click', () => {
+            historyList = [];
+            localStorage.removeItem('script_compare_tool_history');
+            updateHistoryUI();
+            showToast('History cleared');
+        });
+
+        // Utility Helpers
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastMessage.textContent = message;
+            if (type === 'error') {
+                toastIcon.setAttribute('data-lucide', 'alert-circle');
+                toastIcon.className = "w-4 h-4 text-rose-400";
+            } else {
+                toastIcon.setAttribute('data-lucide', 'check-circle');
+                toastIcon.className = "w-4 h-4 text-emerald-400";
+            }
+            lucide.createIcons();
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
