@@ -4,4 +4,4 @@ Title,Description,Category,RawUrl,CodeContent
 "MultipleInputValuesHDLLoad","Loading Multiple Input Values into Staging Table","SQL","https://raw.githubusercontent.com/mytechsys/ScriptBase/refs/heads/main/htdocs/sourcecode/SQL/MultipleInputValuesHDLLoad.sql",
 "ORDS Array Type Data","ORDS Array Type Data","SQL",https://raw.githubusercontent.com/mytechsys/ScriptBase/refs/heads/main/htdocs/sourcecode/SQL/ORDSArrayTypeData.sql,
 "HCM REST Service","HCM Rest Endpoint References","JSON",https://raw.githubusercontent.com/mytechsys/ScriptBase/refs/heads/main/htdocs/sourcecode/HCMREST/restreference.json,
-"Employee People Group","People Group","SQL","https://raw.githubusercontent.com/mytechsys/app/refs/heads/main/htdocs/sourcecode/BIP/ElementsQueryList.sql",
+"Employee People Group","People Group","SQL","https://raw.githubusercontent.com/mytechsys/app/refs/heads/main/htdocs/sourcecode/BIP/EmployeePeopleGroupQuery.sql",
