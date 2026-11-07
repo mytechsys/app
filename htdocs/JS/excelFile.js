@@ -120,4 +120,61 @@ function downloadTemplate() {
   XLSX.utils.book_append_sheet(wb, ws, 'Template');
   XLSX.writeFile(wb, 'template.xlsx');
 }
+
+
+// Load: <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+ 
+function downloadTemplate() {
+  const categories = ['Benefits', 'Work', 'Bonus', 'Allowance'];
+  const processingTypes = ['Off Cycle', 'Urgent', 'Regular', 'Retro'];
+  const maxRows = 500;
+ 
+  const headers = ['Row ID', 'Name', 'Category', 'Processing Type', 'Combined'];
+  const ws = XLSX.utils.aoa_to_sheet([headers]);
+ 
+  const longest = arr => Math.max(...arr.map(v => String(v).length));
+  ws['!cols'] = [
+    { wch: longest(['Row ID']) + 4 },
+    { wch: 28 },
+    { wch: longest(['Category', ...categories]) + 4 },
+    { wch: longest(['Processing Type', ...processingTypes]) + 4 },
+    { wch: 45 }
+  ];
+ 
+  for (let r = 2; r <= maxRows; r++) {
+    ['A', 'B', 'C', 'D'].forEach(col => {
+      ws[col + r] = { t: 's', v: '', z: '@' };
+    });
+    ws['E' + r] = {
+      t: 's',
+      f: `IF(COUNTA(A${r}:D${r})=0,"",TEXTJOIN("|",TRUE,A${r}:D${r}))`
+    };
+  }
+  ws['!ref'] = `A1:E${maxRows}`;
+ 
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Template');
+ 
+  const data = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([data], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  });
+  const url = URL.createObjectURL(blob);
+ 
+  // Open in a new tab AND download with a proper file name
+  const a = document.createElement('a');
+  a.href = url;
+  a.target = '_blank';
+  a.rel = 'noopener';
+  a.download = 'template.xlsx';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+ 
+  // Keep the URL alive long enough for the new tab to load it
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+ 
+document.getElementById('downloadBtn')?.addEventListener('click', downloadTemplate);
+ 
  
