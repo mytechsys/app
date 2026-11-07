@@ -72,4 +72,52 @@ async function downloadTemplate() {
   a.remove();
   URL.revokeObjectURL(url);
 }
+
+
+
+// Load: <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+ 
+function downloadTemplate() {
+  const categories = ['Benefits', 'Work', 'Bonus', 'Allowance'];
+  const processingTypes = ['Off Cycle', 'Urgent', 'Regular', 'Retro'];
+  const maxRows = 500; // last row that gets text format and formula
+ 
+  const headers = ['Row ID', 'Name', 'Category', 'Processing Type', 'Combined'];
+  const ws = XLSX.utils.aoa_to_sheet([headers]);
+ 
+  // Column widths (header + dropdown values)
+  const longest = (arr) => Math.max(...arr.map(v => String(v).length));
+  ws['!cols'] = [
+    { wch: longest(['Row ID']) + 4 },
+    { wch: 28 },
+    { wch: longest(['Category', ...categories]) + 4 },
+    { wch: longest(['Processing Type', ...processingTypes]) + 4 },
+    { wch: 45 }
+  ];
+ 
+  for (let r = 2; r <= maxRows; r++) {
+    // Columns A-D: Text format ('@')
+    ['A', 'B', 'C', 'D'].forEach(col => {
+      ws[col + r] = { t: 's', v: '', z: '@' };
+    });
+ 
+    // Column E: combined value, e.g. 101|Ravi|Bonus|Off Cycle
+    ws['E' + r] = {
+      t: 's',
+      f: `IF(COUNTA(A${r}:D${r})=0,"",TEXTJOIN("|",TRUE,A${r}:D${r}))`
+    };
+  }
+ 
+  ws['!ref'] = `A1:E${maxRows}`;
+ 
+  // SheetJS Pro only: dropdown lists
+  // ws['!dataValidation'] = [
+  //   { sqref: `C2:C${maxRows}`, type: 'list', formula1: `"${categories.join(',')}"` },
+  //   { sqref: `D2:D${maxRows}`, type: 'list', formula1: `"${processingTypes.join(',')}"` }
+  // ];
+ 
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Template');
+  XLSX.writeFile(wb, 'template.xlsx');
+}
  
